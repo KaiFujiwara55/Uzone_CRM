@@ -1,18 +1,15 @@
 # win32comを利用して、Outlook操作をプログラムによって自動化して送信する手法
 
 import os
+from dotenv import load_dotenv
+load_dotenv("MASTER_DATA/.env")
 import sys
-import shutil
-import subprocess
-import json
+import datetime
 import pandas as pd
 import traceback
 import win32com.client
 from pathlib import Path
 import time
-
-with open("C:\\Users\\info\\Desktop\\Uzone_CRM\\MASTER_DATA\\ENV_PATH.json") as f:
-    ENV_PATH = json.load(f)
 
 def mailSend(mail_address, subject, body_text, img_path, flg):
     # OutlookAPP のインスタンス化
@@ -22,7 +19,7 @@ def mailSend(mail_address, subject, body_text, img_path, flg):
     mail.bodyFormat = 2 # 2: htmlメールのフォーマットを指定
 
     mail.To = mail_address
-    mail.Cc = ENV_PATH["CC_mailaddress"]
+    mail.Cc = os.environ.get("CC_MAILADDRESS")
     mail.Subject = subject
     mail.HTMLBody = body_text
 
@@ -37,28 +34,24 @@ def mailSend(mail_address, subject, body_text, img_path, flg):
     else:
         mail.send
 
-def main(year, month, date):
+def main(year_month_date):
     try:
         # 本文をhtmlファイルをテキストで取得
-        with open(ENV_PATH["mail_body"], mode="rb") as g:
+        with open(os.environ.get("MAIL_BODY"), mode="rb") as g:
             html = g.read().decode("utf-8")
-        
-        # year-month-dataを作成
-        if int(month)<10:
-            month = "0"+str(month)
-        if int(date)<10:
-            date = "0"+str(date)
-        year_month_date = str(year)+str(month)+str(date)
 
         # 件名を取得
-        subject = open(ENV_PATH["mail_subject"].replace("{year-month-date}", year_month_date), "r", encoding="utf-8").read()
+        subject = open(os.environ.get("MAIL_SUBJECT").replace("{year-month-date}", year_month_date), "r", encoding="utf-8").read()
         # 部品名を取得
-        parts_name = open(ENV_PATH["parts_name"].replace("{year-month-date}", year_month_date), "r", encoding="utf-8").read()
+        parts_name = open(os.environ.get("PARTS_NAME").replace("{year-month-date}", year_month_date), "r", encoding="utf-8").read()
         # img_pathを取得
-        img_path = ENV_PATH["img_path"].replace("{year-month-date}", year_month_date)
+        if os.path.exists(os.environ.get("IMG").replace("{year-month-date}", year_month_date)):
+            img_path = os.environ.get("IMG").replace("{year-month-date}", year_month_date)
+        else:
+            raise Exception("画像が存在しません。画像を配置してください。")
 
         # 送信先dfを取得
-        mail_status_df = pd.read_csv(ENV_PATH["mail_status_path"].replace("{year-month-date}", year_month_date))
+        mail_status_df = pd.read_csv(os.environ.get("mail_status_path").replace("{year-month-date}", year_month_date))
 
         # 送信済みのものを再度送る確認
         if mail_status_df["is_send"].isin(["済"]).any():
@@ -105,7 +98,7 @@ def main(year, month, date):
                                 print("「y」「n」で入力してください")
 
                     mail_status_df.loc[idx, "is_send"] = "済"
-                    mail_status_df.to_csv(ENV_PATH["mail_status_path"].replace("{year-month-date}", year_month_date), index=False)
+                    mail_status_df.to_csv(os.environ.get("mail_status_path").replace("{year-month-date}", year_month_date), index=False)
                     time.sleep(5)
         
     except Exception as e:
@@ -119,4 +112,7 @@ def main(year, month, date):
         sys.exit()
     
 if __name__=="__main__":
-    main(2024, 11, 4)
+    # year-month-dataを作成
+    year_month_date = datetime.datetime.now().strftime("%Y%m%d")
+
+    main(year_month_date)

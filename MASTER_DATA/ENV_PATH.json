@@ -1,9 +1,0 @@
-{
-    "mail_body":"C:\\Users\\info\\Desktop\\Uzone_CRM\\MASTER_DATA\\mail.html",
-    "auth_path":"C:\\Users\\info\\Desktop\\Uzone_CRM\\MASTER_DATA\\connect_google_service.json",
-    "CC_mailaddress":"manager@partsone7.com",
-    "mail_status_path":"C:\\Users\\info\\Desktop\\Uzone_CRM\\TRAN_DATA\\{year-month-date}\\mail_status.csv",
-    "mail_subject":"C:\\Users\\info\\Desktop\\Uzone_CRM\\TRAN_DATA\\{year-month-date}\\subject.txt",
-    "parts_name":"C:\\Users\\info\\Desktop\\Uzone_CRM\\TRAN_DATA\\{year-month-date}\\parts_name.txt",
-    "img_path":"C:\\Users\\info\\Desktop\\Uzone_CRM\\TRAN_DATA\\{year-month-date}\\mail.png"
-}
