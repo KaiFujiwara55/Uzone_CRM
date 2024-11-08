@@ -30,10 +30,14 @@ def mailSend(mail_address, subject, body_text, img_path, flg):
 
     # 送信
     if flg:
-        print("メールのプレビューを確認して、問題がなければ送信を行ってください")
+        print("メールのプレビューを確認して、問題がなければ閉じてください")
         mail.display(flg)
     else:
-        mail.send
+        try:
+            mail.send
+            return True
+        except:
+            return False
 
 def main(year_month_date):
     try:
@@ -70,8 +74,20 @@ def main(year_month_date):
         else:
             reSendFlg = False
 
-        # 1通目はプレビュー用flg
-        firstFlg = True
+        # 1通目はプレビュー用
+        # 店名、部品名部分を置換する
+        body_text = html
+        body_text = body_text.replace("{店名}", "TEST店")
+        body_text = body_text.replace("{部品名}", parts_name)
+        mailSend("test@test.com", subject, body_text, img_path, flg=True)
+        while True:
+            x = input("メールの送信を開始しますか？(y or n)")
+            if x == "y":
+                break
+            elif x == "n":
+                sys.exit()
+            else:
+                print("「y」「n」で入力してください")
 
         for idx, row in tqdm(mail_status_df.iterrows(), total=len(mail_status_df)):
             account_name = row["account_name"]
@@ -86,20 +102,12 @@ def main(year_month_date):
             # メール送信
             if type(mail_address) is str:
                 if (status == "未" or reSendFlg):
-                    print(account_name)
-                    mailSend(mail_address, subject, body_text, img_path, firstFlg)
-                    if firstFlg:
-                        while True:
-                            x = input("メールの送信を開始しますか？(y or n)")
-                            if x == "y":
-                                firstFlg = False
-                                break
-                            elif x == "n":
-                                sys.exit()
-                            else:
-                                print("「y」「n」で入力してください")
-
-                    mail_status_df.loc[idx, "is_send"] = "済"
+                    is_send = mailSend(mail_address, subject, body_text, img_path, flg=False)
+                    
+                    if is_send:
+                        mail_status_df.loc[idx, "is_send"] = "済"
+                    else:
+                        mail_status_df.loc[idx, "is_send"] = "失敗"
                     mail_status_df.to_csv(os.environ.get("MAIL_STATUS_CSV").replace("{year-month-date}", year_month_date), index=False)
                     time.sleep(5)
         
