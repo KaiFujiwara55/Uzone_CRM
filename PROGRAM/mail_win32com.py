@@ -10,17 +10,18 @@ import traceback
 import win32com.client
 from pathlib import Path
 import time
+from tqdm import tqdm
 
 def mailSend(mail_address, subject, body_text, img_path, flg):
     # OutlookAPP のインスタンス化
-    outlook = win32com.client.Dispatch("outlook.application")
+    outlook = win32com.client.Dispatch("Outlook.Application")
     # メールオブジェクトの作成
     mail = outlook.CreateItem(0)  # 0: メールアイテム
     mail.bodyFormat = 2 # 2: htmlメールのフォーマットを指定
 
-    mail.To = mail_address
-    mail.Cc = os.environ.get("CC_MAILADDRESS")
-    mail.Subject = subject
+    mail.to = mail_address
+    mail.cc = os.environ.get("CC_MAILADDRESS")
+    mail.subject = subject
     mail.HTMLBody = body_text
 
     # 画像を添付、添付ファイルをメールに埋め込むためにidをつける
@@ -47,11 +48,12 @@ def main(year_month_date):
         # img_pathを取得
         if os.path.exists(os.environ.get("IMG").replace("{year-month-date}", year_month_date)):
             img_path = os.environ.get("IMG").replace("{year-month-date}", year_month_date)
+            img_path = os.getcwd()+"\\"+img_path
         else:
             raise Exception("画像が存在しません。画像を配置してください。")
 
         # 送信先dfを取得
-        mail_status_df = pd.read_csv(os.environ.get("mail_status_path").replace("{year-month-date}", year_month_date))
+        mail_status_df = pd.read_csv(os.environ.get("MAIL_STATUS_CSV").replace("{year-month-date}", year_month_date))
 
         # 送信済みのものを再度送る確認
         if mail_status_df["is_send"].isin(["済"]).any():
@@ -71,7 +73,7 @@ def main(year_month_date):
         # 1通目はプレビュー用flg
         firstFlg = True
 
-        for idx, row in mail_status_df.iterrows():
+        for idx, row in tqdm(mail_status_df.iterrows(), total=len(mail_status_df)):
             account_name = row["account_name"]
             mail_address = row["mail_address"]
             status = row["is_send"]
@@ -98,7 +100,7 @@ def main(year_month_date):
                                 print("「y」「n」で入力してください")
 
                     mail_status_df.loc[idx, "is_send"] = "済"
-                    mail_status_df.to_csv(os.environ.get("mail_status_path").replace("{year-month-date}", year_month_date), index=False)
+                    mail_status_df.to_csv(os.environ.get("MAIL_STATUS_CSV").replace("{year-month-date}", year_month_date), index=False)
                     time.sleep(5)
         
     except Exception as e:
