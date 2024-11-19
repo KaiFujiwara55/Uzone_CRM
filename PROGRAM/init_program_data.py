@@ -18,7 +18,7 @@ def make_dir(year_month_date):
 def str_to_list(str):
     return str.replace("[", "").replace("]", "").replace("'", "").split(", ")
 
-def get_spread_sheet():
+def get_spread_sheet(spreadsheet_key):
     scopes = [
         'https://www.googleapis.com/auth/spreadsheets',
         'https://www.googleapis.com/auth/drive'
@@ -31,19 +31,19 @@ def get_spread_sheet():
 
     gc = gspread.authorize(credentials)
     
-    spreadsheet = gc.open_by_key(os.environ.get("SPREADSHEET_KEY"))
+    spreadsheet = gc.open_by_key(spreadsheet_key)
 
     return spreadsheet
 
-def spreadsheet_to_df(spreadsheet):
-    df = pd.DataFrame(spreadsheet.worksheet(os.environ.get("SHEET_NAME")).get_all_values())
+def spreadsheet_to_df(spreadsheet, sheet_name):
+    df = pd.DataFrame(spreadsheet.worksheet(sheet_name))
     df.columns = df.iloc[0]
     df = df.drop(0, axis=0)
     return df
 
 def make_mail_status_csv(year_month_date):
-    spreadsheet = get_spread_sheet()
-    df = spreadsheet_to_df(spreadsheet, )
+    spreadsheet = get_spread_sheet(os.environ.get("SPRADSHEET_KEY"))
+    df = spreadsheet_to_df(spreadsheet, os.environ.get("SHEET_NAME"))
 
     df = df[str_to_list(os.environ.get("USE_COLUMNS"))]
     df.columns = ["account_name", "mail_address"]
